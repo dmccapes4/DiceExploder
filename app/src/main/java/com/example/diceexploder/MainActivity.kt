@@ -23,9 +23,19 @@ class MainActivity : AppCompatActivity() {
 
         val inputEditText = findViewById<EditText>(R.id.inputEditText);
         val resultTextView = findViewById<TextView>(R.id.resultTextView);
+        val diceResultTextView = findViewById<TextView>(R.id.diceResultTextView);
 
         fab.setOnClickListener { view ->
-            resultTextView.text = rollDice(inputEditText.text.toString()).toString()
+            var results = rollDice(inputEditText.text.toString())
+            println("results " + results)
+            if (results.size > 0) {
+                val result = results.get(results.lastIndex).get(0)
+                val dice = results.dropLast(1)
+                resultTextView.text = result.toString()
+                diceResultTextView.text = dice.toString()
+            } else {
+                resultTextView.text = "Please input a valid roll"
+            }
         }
     }
 
@@ -45,73 +55,82 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun roll(dieCount: Int, numDie: Int): Int {
-        var result = 0
+    fun roll(dieCount: Int, numDie: Int): MutableList<Int> {
+        var results = mutableListOf<Int>()
+        println(numDie)
         for (i in 1..numDie) {
-            result += (1..numDie).random()
+            val curResult = (1..numDie).random()
+            results.add(curResult)
         }
-        println("roll d" + dieCount + " " + result)
-        return result
+        println("roll d" + dieCount + " " + results)
+        return results
     }
 
-    fun explode(dieCount: Int, numDie: Int): Int {
-        var result = 0
+    fun explode(dieCount: Int, numDie: Int): MutableList<Int> {
+        var results = mutableListOf<Int>()
         for (i in 1..numDie) {
             var roll = (1..dieCount).random()
-            result += roll
+            results.add(roll)
             if (roll == dieCount) {
-                result += explode(dieCount, 1)
+                results.plusAssign(explode(dieCount, 1))
             }
         }
-        println("explode d" + dieCount + " " + result)
-        return result
+        println("explode d" + dieCount + " " + results)
+        return results
     }
 
 
-    fun advantage(dieCount: Int, numDie: Int, advantageCount: Int, explode: Boolean): Int {
+    fun advantage(dieCount: Int, numDie: Int, advantageCount: Int, explode: Boolean): MutableList<Int> {
         var result = 0
         var results = mutableListOf<Int>()
         for (i in (1..advantageCount + numDie)) {
             if (explode) {
-                results.add(explode(dieCount, 1))
+                results.plusAssign(explode(dieCount, 1))
             } else {
-                results.add(roll(dieCount, 1))
+                results.plusAssign(roll(dieCount, 1))
             }
         }
         results.sort()
         results.reverse()
         println(results)
-        for (i in 1..numDie) {
-            result += results[i]
-        }
-        return result
+        return results
     }
 
-    fun rollDice(rollInput: String): Int {
+    fun rollDice(rollInput: String): MutableList<MutableList<Int>> {
         var result = 0
-        var results = mutableListOf<Int>()
+        var results = mutableListOf<MutableList<Int>>()
+        if (rollInput == "") {
+            return results
+        }
         val rollInputClean = rollInput.replace("\\s".toRegex(), "")
         val rolls = rollInputClean.split("+")
         for (curRoll in rolls) {
             var rollSplit = curRoll.split("d")
+            rollSplit = rollSplit.toMutableList()
+            println(rollSplit)
             val numDie = rollSplit[0].toInt()
             var explodeOn = false
 
             if (rollSplit[1].contains("!")) {
                 explodeOn = true
+                rollSplit[1] = rollSplit[1].replace("!", "")
             }
-            val dieCount = rollSplit[1].replace("!", "").toInt()
+            val dieCount = rollSplit[1].toInt()
             if (explodeOn) {
                 results.add(explode(dieCount, numDie))
             } else {
                 results.add(roll(dieCount, numDie))
             }
+            println(results)
         }
-        results.sort()
-        for (res in results) {
-            result += res;
+        var total = 0
+        for (result in results) {
+            for (res in result)  {
+                total += res
+            }
         }
-        return result
+        results.add(mutableListOf<Int>(total))
+        return results
     }
 
 }
