@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Button
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -14,6 +15,8 @@ import kotlin.math.exp
 
 
 class MainActivity : AppCompatActivity() {
+    var explodeOn = false
+    var advantage = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +27,35 @@ class MainActivity : AppCompatActivity() {
         val inputEditText = findViewById<EditText>(R.id.inputEditText);
         val resultTextView = findViewById<TextView>(R.id.resultTextView);
         val diceResultTextView = findViewById<TextView>(R.id.diceResultTextView);
+        val d4Button = findViewById<Button>(R.id.d4Button)
+        d4Button.setOnClickListener {
+            onDieButtonClick("4")
+        }
+        val d6Button = findViewById<Button>(R.id.d6Button)
+        d6Button.setOnClickListener {
+            onDieButtonClick("6")
+        }
+        val d8Button = findViewById<Button>(R.id.d8Button)
+        d8Button.setOnClickListener {
+            onDieButtonClick("8")
+        }
+        val d10Button = findViewById<Button>(R.id.d10Button)
+        d10Button.setOnClickListener {
+            onDieButtonClick("10")
+        }
+        val d12Button = findViewById<Button>(R.id.d12Button)
+        d12Button.setOnClickListener {
+            onDieButtonClick("12")
+        }
+        val d20Button = findViewById<Button>(R.id.d20Button)
+        d20Button.setOnClickListener {
+            onDieButtonClick("20")
+        }
+        val explodeButton = findViewById<Button>(R.id.explodeButton)
+        explodeButton.setOnClickListener {
+            explodeOn = !explodeOn
+        }
+        val advantageButton = findViewById<Button>(R.id.advantageButton)
 
         fab.setOnClickListener { view ->
             var results = rollDice(inputEditText.text.toString())
@@ -38,6 +70,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun onDieButtonClick(die: String) {
+        var dieString = die
+        if (explodeOn) {
+            dieString += "!"
+        }
+        val inputEditText = findViewById<EditText>(R.id.inputEditText)
+        var inputText = inputEditText.getText().toString()
+        if (inputText.length == 0) {
+            inputEditText.setText("1d" + die)
+            return
+        }
+        val rollsArray = inputText.replace(" ", "").split("+")
+        var rollsList = mutableListOf<String>()
+        rollsList.addAll(rollsArray)
+        println(rollsList)
+        var found = false
+        for (i in (0..rollsList.size - 1)) {
+            val rollSplit = rollsList.get(i).replace(" ".toRegex(), "").split("d")
+            if (rollSplit.get(1).equals(dieString)) {
+                val newNum = (rollSplit.get(0).replace(" ", "").toInt() + 1).toString()
+                rollsList.set(i, newNum + "d" + dieString)
+                found = true
+            }
+        }
+        if (!found) {
+            rollsList.add("1d" + dieString)
+        }
+        var newInputString = rollsList.get(0)
+        for (i in (1..rollsList.size - 1)) {
+            newInputString += " + " + rollsList.get(i)
+        }
+        inputEditText.setText(newInputString)
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -59,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         var results = mutableListOf<Int>()
         println(numDie)
         for (i in 1..numDie) {
-            val curResult = (1..numDie).random()
+            val curResult = (1..dieCount).random()
             results.add(curResult)
         }
         println("roll d" + dieCount + " " + results)
@@ -81,7 +148,6 @@ class MainActivity : AppCompatActivity() {
 
 
     fun advantage(dieCount: Int, numDie: Int, advantageCount: Int, explode: Boolean): MutableList<Int> {
-        var result = 0
         var results = mutableListOf<Int>()
         for (i in (1..advantageCount + numDie)) {
             if (explode) {
@@ -97,7 +163,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun rollDice(rollInput: String): MutableList<MutableList<Int>> {
-        var result = 0
         var results = mutableListOf<MutableList<Int>>()
         if (rollInput == "") {
             return results
